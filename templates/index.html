@@ -252,13 +252,19 @@
             <div class="input-group">
                 <label for="quality">Quality:</label>
                 <select id="quality">
-                    <option value="best">Best Quality</option>
-                    <option value="720">720p</option>
-                    <option value="480">480p</option>
-                    <option value="360">360p</option>
-                    <option value="worst">Lowest Quality</option>
-                    <option value="audio">Audio Only (MP3)</option>
+                    <option value="best">🔴 Best Available (4K/8K/1080p)</option>
+                    <option value="4K">🎬 Ultra HD 4K (2160p)</option>
+                    <option value="1440">🎥 Quad HD (1440p)</option>
+                    <option value="1080">🟣 Full HD (1080p)</option>
+                    <option value="720">🟠 HD (720p)</option>
+                    <option value="480">🟡 Standard (480p)</option>
+                    <option value="360">🟢 Low Quality (360p)</option>
+                    <option value="worst">⚫ Minimum Quality</option>
+                    <option value="audio">🎵 Audio Only (MP3)</option>
                 </select>
+                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                    💡 "Best Available" now supports 4K and 8K when available! 🎉
+                </small>
             </div>
             
             <button type="submit" class="download-btn" id="downloadBtn">
@@ -423,46 +429,64 @@
             const downloadsList = document.getElementById('downloadsList');
             downloadsList.innerHTML = '<p>Loading...</p>';
             
+            console.log('[Frontend] Fetching /downloads ...');
             fetch('/downloads')
-            .then(response => response.json())
+            .then(response => {
+                console.log('[Frontend] /downloads response:', response);
+                return response.json();
+            })
             .then(data => {
+                console.log('[Frontend] /downloads data:', data);
                 if (data.error) {
                     downloadsList.innerHTML = '<p>Error loading downloads</p>';
                     return;
                 }
-                
                 if (data.length === 0) {
                     downloadsList.innerHTML = '<p>No downloads yet</p>';
                     return;
                 }
-                
                 let html = '';
                 data.forEach(file => {
                     const size = formatFileSize(file.size);
                     const date = new Date(file.modified * 1000).toLocaleString();
-                    
-                    html += `
-                        <div class="download-item">
-                            <div class="file-info">
-                                <div class="file-name">${file.name}</div>
-                                <div class="file-size">${size} • ${date}</div>
-                            </div>
-                            <button class="download-file-btn" onclick="downloadFile('${file.name}')">
-                                💾 Download
-                            </button>
-                        </div>
-                    `;
+            html += `
+                <div class="download-item">
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${size} • ${date}</div>
+                    </div>
+                </div>
+            `;
                 });
-                
                 downloadsList.innerHTML = html;
             })
             .catch(error => {
                 downloadsList.innerHTML = '<p>Error loading downloads</p>';
-                console.error('Error:', error);
+                console.error('[Frontend] Error loading downloads:', error);
             });
         }
 
-        function downloadFile(filename) {
+
+        function showFileInExplorer(filename) {
+            console.log('[Frontend] showFileInExplorer called for:', filename);
+            fetch(`/show-in-explorer/${encodeURIComponent(filename)}`)
+                .then(res => {
+                    console.log('[Frontend] /show-in-explorer response:', res);
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('[Frontend] /show-in-explorer data:', data);
+                    if (data.status !== 'success') {
+                        alert('Could not open file location: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch((err) => {
+                    console.error('[Frontend] Error in showFileInExplorer:', err);
+                    alert('Could not open file location.');
+                });
+        }
+
+        function showFile(filename) {
             window.open(`/download-file/${encodeURIComponent(filename)}`, '_blank');
         }
 
