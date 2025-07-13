@@ -543,7 +543,7 @@ def show_in_explorer(filename):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # Set a default proxy URL for all downloads
-proxy_url = 'http://185.238.228.147:80'
+proxy_url = 'http://80.78.128.94:8080'
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
