@@ -223,6 +223,9 @@ def download_video_async(url, quality, download_id):
         # Configure yt-dlp options with enhanced bypass strategies
         progress_hook = ProgressHook(download_id)
         proxy_url = os.environ.get('PROXY_URL')
+        import logging
+        logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+        logging.warning(f"[PROXY] Using proxy: {proxy_url}")
         ydl_opts = {
             'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
             'progress_hooks': [progress_hook],
@@ -395,7 +398,7 @@ def download_video_async(url, quality, download_id):
                     if quality == 'best' or quality == '4K':
                         strategy_opts['format'] = strategy['format_override']
 
-                print(f"Trying strategy: {strategy['name']}")
+                logging.info(f"Trying strategy: {strategy['name']}")
                 with yt_dlp.YoutubeDL(strategy_opts) as ydl:
                     result = ydl.download([url])
 
@@ -404,25 +407,25 @@ def download_video_async(url, quality, download_id):
                     finished_file = progress_hook.finished_file
                     if finished_file and os.path.isfile(finished_file):
                         mark_downloaded(finished_file)
-                        print(f"[DEBUG] Marked downloaded file: {finished_file}")
+                        logging.info(f"[DEBUG] Marked downloaded file: {finished_file}")
                     else:
                         # Fallback: mark the most recent .mp4 file in the Downloads folder
-                        print(f"[DEBUG] No finished file to mark (progress_hook): {finished_file}")
+                        logging.info(f"[DEBUG] No finished file to mark (progress_hook): {finished_file}")
                         mp4_files = [f for f in os.listdir(DOWNLOAD_FOLDER) if f.lower().endswith('.mp4')]
                         if mp4_files:
                             mp4_files_full = [os.path.join(DOWNLOAD_FOLDER, f) for f in mp4_files]
                             most_recent_mp4 = max(mp4_files_full, key=os.path.getmtime)
                             mark_downloaded(most_recent_mp4)
-                            print(f"[DEBUG] Fallback: Marked most recent mp4: {most_recent_mp4}")
+                            logging.info(f"[DEBUG] Fallback: Marked most recent mp4: {most_recent_mp4}")
                         else:
-                            print(f"[DEBUG] No mp4 files found for fallback marker.")
+                            logging.info(f"[DEBUG] No mp4 files found for fallback marker.")
                 except Exception as e:
-                    print(f"[DEBUG] Could not mark downloaded file: {e}")
+                    logging.error(f"[DEBUG] Could not mark downloaded file: {e}")
                 success = True
                 break
 
             except Exception as e:
-                print(f"Strategy {strategy['name']} failed: {e}")
+                logging.error(f"Strategy {strategy['name']} failed: {e}")
                 continue
         
         if not success:
@@ -430,7 +433,7 @@ def download_video_async(url, quality, download_id):
             
     except Exception as e:
         error_msg = str(e)
-        print(f"Download error for {download_id}: {error_msg}")  # Debug logging
+        logging.error(f"Download error for {download_id}: {error_msg}")  # Debug logging
         
         if 'Sign in to confirm' in error_msg or 'bot' in error_msg.lower():
             download_progress[download_id] = {
