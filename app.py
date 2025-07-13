@@ -222,6 +222,7 @@ def download_video_async(url, quality, download_id):
         
         # Configure yt-dlp options with enhanced bypass strategies
         progress_hook = ProgressHook(download_id)
+        proxy_url = os.environ.get('PROXY_URL')
         ydl_opts = {
             'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
             'progress_hooks': [progress_hook],
@@ -292,6 +293,9 @@ def download_video_async(url, quality, download_id):
             'no_color': True,
             'call_home': False,
         }
+        # Add proxy if set
+        if proxy_url:
+            ydl_opts['proxy'] = proxy_url
 
         # After download, create a marker file for tracking
         def mark_downloaded(filepath):
@@ -537,6 +541,9 @@ def show_in_explorer(filename):
     except Exception as e:
         print(f"[ShowInExplorer] Exception: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# Set a default proxy URL for all downloads
+proxy_url = 'http://185.238.228.147:80'
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
